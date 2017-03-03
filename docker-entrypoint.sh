@@ -11,17 +11,8 @@ UPSTREAMS_FILE=$NGINX_INSTALL_PATH/conf.d/upstreams.conf
 
 # Update placeholder vars to be taken from ENV vars
 
-PLACEHOLDER_SERVER_NAME="${SERVER_NAME:-localhost}"
+PLACEHOLDER_SERVER_NAME="${SERVER_NAME:-_}"
 PLACEHOLDER_SERVER_TYPE="${SERVER_TYPE:-http}"
-
-SITE_CONFIG_PATH="${NGINX_INSTALL_PATH}/conf.d/${PLACEHOLDER_SERVER_TYPE}.conf"
-
-# if [[ "$SERVER_TYPE" == "elb" ]]; then
-#   echo "NOTICE: SERVER_TYPE='elb' requires HTTPS listener & SSL cert for SERVER_NAME to be setup on ELB!"
-# elif [[ "$SERVER_TYPE" == "https" ]]; then
-#   if [[ ]]
-#   #statements
-# fi
 
 upstream_exists () {
   for i in "${UPSTREAMS[@]}"; do
@@ -104,11 +95,11 @@ else
   done
 fi
 
-# Replace all instances of the placeholders with the values above.
-sed -i "s/PLACEHOLDER_SERVER_NAME/${PLACEHOLDER_SERVER_NAME}/g" "${SITE_CONFIG_PATH}"
-sed -i "s:PLACEHOLDER_NGINX_INSTALL_PATH:${NGINX_INSTALL_PATH}:g" "${SITE_CONFIG_PATH}"
 sed -i "s/PLACEHOLDER_SERVER_TYPE/${PLACEHOLDER_SERVER_TYPE}/g" "${NGINX_INSTALL_PATH}/nginx.conf"
-sed -i "s:PLACEHOLDER_NGINX_INSTALL_PATH:${NGINX_INSTALL_PATH}:g" "${NGINX_INSTALL_PATH}/nginx.conf"
+
+for conf in $NGINX_INSTALL_PATH/conf.d/*.conf; do
+  sed -i "s/PLACEHOLDER_SERVER_NAME/${PLACEHOLDER_SERVER_NAME}/g" "${conf}"
+done 
 
 # Execute the CMD from the Dockerfile and pass in all of its arguments.
 exec "$@"
