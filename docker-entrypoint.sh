@@ -25,13 +25,12 @@ location_exists () {
 
 function create_location() {
 cat <<EOF
-location ~ ^$1 {
-  rewrite $1(.*) $4\$1 break;
+location ~ ^$1(?<script_path>.+)\$ {
   fastcgi_index index.php;
   fastcgi_pass $2:$3;
   fastcgi_buffers 16 16k;
   fastcgi_buffer_size 32k;
-  fastcgi_param  SCRIPT_NAME  \$document_root\$fastcgi_script_name;
+  fastcgi_param  SCRIPT_NAME  \$document_root$4\$script_path;
   include fastcgi_params;
 }
 EOF
