@@ -2,7 +2,7 @@
 
 set -e
 
-REPO=cmr1/nginx-proxy
+IMAGE=cmr1/nginx-proxy
 BRANCH_TARGETS=("php-fpm" "open-cors")
 
 should_deploy_branch() {
@@ -19,16 +19,21 @@ push() {
   # Get the tag from argument to this function
   TAG="${1:-latest}"
 
-  echo "Deploying tagged release '$TAG'"
+  # Build image with release tag
+  echo "Building tagged release '$TAG'"
+  docker build -t $IMAGE:$TAG .
 
   # Authenticate with DockerHub
+  echo "Authenticating with DockerHub"
   docker login -u="$DOCKER_HUB_USERNAME" -p="$DOCKER_HUB_PASSWORD" 
-
+  
   # Tag the Docker image
-  docker tag $REPO:latest $REPO:$TAG
+  echo "Tagging for release '$IMAGE:$TAG'"
+  docker tag $IMAGE:$TAG $IMAGE:$TAG
   
   # Push the tagged image
-  docker push $REPO:$TAG
+  echo "Pushing tagged release '$TAG'"
+  docker push $IMAGE:$TAG
 }
 
 if [ ! -z "$TRAVIS_TAG" ]; then
