@@ -6,6 +6,7 @@ before_install:
 - docker build -t cmr1/nginx-proxy .
 - docker run -d -p 127.0.0.1:80:80 cmr1/nginx-proxy
 script:
+- docker ps -a
 - "./test.sh"
 after_success:
 - "./deploy.sh"
