@@ -25,13 +25,13 @@ location_exists () {
 
 function create_location() {
 cat <<EOF
-location ~ ^$1(?<script_path>.+)\$ {
-  fastcgi_index index.php;
-  fastcgi_pass $2:$3;
-  fastcgi_buffers 16 16k;
-  fastcgi_buffer_size 32k;
-  fastcgi_param  SCRIPT_NAME  \$document_root$4\$script_path;
-  include fastcgi_params;
+location ~ ^$1.+\.php\$ {
+    fastcgi_index index.php;
+    fastcgi_pass $2:$3;
+    fastcgi_buffers 16 16k;
+    fastcgi_buffer_size 32k;
+    fastcgi_param  SCRIPT_FILENAME  \$document_root\$fastcgi_script_name;
+    include fastcgi_params;
 }
 EOF
 }
@@ -51,16 +51,15 @@ else
       path="${SETTINGS[0]}"
       cont="${SETTINGS[1]}"
       port="${SETTINGS[2]}"
-      dest="${SETTINGS[3]:-$path}"
 
-      echo "Configuring NGINX PHP-FPM route: '$path' => '$cont:$port$dest'"
+      echo "Configuring NGINX PHP-FPM route: '$path' => '$cont:$port'"
 
       if location_exists $path; then
         echo "ERROR! Location conflict: '$path' is already registered!"
         exit 1
       else
         LOCATIONS+=("$path")
-        echo "$(create_location $path $cont $port $dest)" >> $LOCATIONS_FILE
+        echo "$(create_location $path $cont $port)" >> $LOCATIONS_FILE
       fi
     fi
   done
