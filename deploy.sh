@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 REPO=cmr1/nginx-proxy
 
 function push() {
