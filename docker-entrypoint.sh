@@ -3,8 +3,10 @@
 # Exit the script as soon as something fails.
 set -e
 
+SERVERNAMES=()
 LOCATIONS=()
 
+SERVERNAMES_FILE=$NGINX_INSTALL_PATH/conf.d/servernames.conf
 LOCATIONS_FILE=$NGINX_INSTALL_PATH/conf.d/locations.conf
 
 # Update placeholder vars to be taken from ENV vars
@@ -23,10 +25,22 @@ location_exists () {
   return 1
 }
 
+servername_exists () {
+  for i in "${SERVERNAMES[@]}"; do
+    if [[ "$1" == "$i" ]]; then
+      return 0
+    fi
+  done
+
+  return 1
+}
+
 function create_location() {
 cat <<EOF
+index index.php index.html;
+
 location / {
-  try_files $uri $uri/ /index.php?$args;
+  try_files \$uri \$uri/ /index.php?\$args;
 }
 
 # prevent nginx from serving protected files
@@ -45,7 +59,51 @@ location ~ ^$1.+\.php\$ {
 EOF
 }
 
-if [[ "$SERVER_BACKENDS" == "" ]]; then
+if [[ "$SERVER_SERVERNAMES" ]]; then
+  IFS=',' read -ra PROVIDED_SERVERNAMES <<< "$SERVER_SERVERNAMES"
+  IFS=$'\n' SORTED_SERVERNAMES=($(sort -r <<<"${PROVIDED_SERVERNAMES[*]}"))
+
+  echo "" > $SERVERNAMES_FILE
+
+  for servername in "${SORTED_SERVERNAMES[@]}"; do
+    IFS=':' read -ra SETTINGS <<< "$servername"
+
+    if (( ${#SETTINGS[@]} >= 4 )); then
+      host="${SETTINGS[0]}"
+      cont="${SETTINGS[1]}"
+      port="${SETTINGS[2]}"
+      root="${SETTINGS[3]}"
+
+      echo "Configuring NGINX PHP-FPM servername: '$host' => '$cont:$port:$root'"
+
+      if servername_exists $hist; then
+        echo "ERROR! ServerName conflict: '$host' is already registered!"
+        exit 1
+      else
+        for conf in $NGINX_INSTALL_PATH/conf.d/*.conf; do
+          file=$(basename $conf)
+
+          cp $conf $NGINX_INSTALL_PATH/conf.d/$host-$file
+        done
+
+        for conf in $NGINX_INSTALL_PATH/conf.d/$host-*; do
+          sed -i "s/common.conf/${host}-common.conf/g" ${conf}
+          sed -i "s/locations.conf/${host}-locations.conf/g" ${conf}
+
+          sed -i "s/PLACEHOLDER_SERVER_NAME/${host}/g" "${conf}"
+          sed -i "s;PLACEHOLDER_SERVER_ROOT;${root};g" "${conf}"
+        done
+
+        SERVERNAMES+=("$host")
+
+        echo "$(create_location '/' $cont $port)" > $NGINX_INSTALL_PATH/conf.d/$host-locations.conf
+        echo "include conf.d/${host}-${PLACEHOLDER_SERVER_TYPE}.conf;" >> $SERVERNAMES_FILE
+      fi
+    fi
+  done
+
+  PLACEHOLDER_SERVER_TYPE="servernames"
+elif [[ "$SERVER_BACKENDS" == "" ]]; then
   echo "No backends defined!"
 else
   echo "" > $LOCATIONS_FILE
