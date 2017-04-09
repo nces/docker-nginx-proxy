@@ -25,13 +25,22 @@ location_exists () {
 
 function create_location() {
 cat <<EOF
+location / {
+  try_files $uri $uri/ /index.php?$args;
+}
+
+# prevent nginx from serving protected files
+location ~ ^/(protected|framework|themes/\w+/views) {
+  deny  all;
+}
+
 location ~ ^$1.+\.php\$ {
-    fastcgi_index index.php;
-    fastcgi_pass $2:$3;
-    fastcgi_buffers 16 16k;
-    fastcgi_buffer_size 32k;
-    fastcgi_param  SCRIPT_FILENAME  \$document_root\$fastcgi_script_name;
-    include fastcgi_params;
+  fastcgi_index index.php;
+  fastcgi_pass $2:$3;
+  fastcgi_buffers 16 16k;
+  fastcgi_buffer_size 32k;
+  fastcgi_param  SCRIPT_FILENAME  \$document_root\$fastcgi_script_name;
+  include fastcgi_params;
 }
 EOF
 }
