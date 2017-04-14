@@ -56,6 +56,19 @@ location ~ ^$1 {
 EOF
 }
 
+function create_assets_location() {
+cat <<EOF
+location ~ ^${1}/?assets/ {
+  root /${2}/public;
+  gzip_static on;
+  expires max;
+  add_header Cache-Control public;
+  add_header Last-Modified "";
+  add_header ETag "";
+}
+EOF
+}
+
 if [[ "$SERVER_BACKENDS" == "" ]]; then
   echo "No backends defined!"
 else
@@ -82,6 +95,10 @@ else
       else
         UPSTREAMS+=("$upstream")      
         echo "$(create_upstream $upstream $cont $port)" >> $UPSTREAMS_FILE
+      fi
+
+      if [ -d /$cont/public ]; then
+        echo "$(create_assets_location $path $cont)" >> $LOCATIONS_FILE
       fi
 
       if location_exists $path; then
