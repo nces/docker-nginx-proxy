@@ -46,11 +46,12 @@ function create_location() {
 cat <<EOF
 location ~ ^$1 {
   rewrite $1(.*) $3\$1 break;
-  proxy_set_header Host \$http_host;
-  proxy_set_header X-Real-IP \$remote_addr;
-  proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-  proxy_set_header X-Forwarded-Proto \$scheme;
-  proxy_redirect off;
+  proxy_set_header Upgrade \$http_upgrade;
+  proxy_set_header Connection "Upgrade";
+  proxy_set_header Host            \$host;
+  proxy_set_header X-Real-IP       \$proxy_protocol_addr;
+  proxy_set_header X-Forwarded-For \$proxy_protocol_addr;
+  proxy_read_timeout 600s;
   proxy_pass http://$2;
 }
 EOF
