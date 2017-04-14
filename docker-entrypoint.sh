@@ -46,6 +46,8 @@ EOF
 function create_location() {
 cat <<EOF
 location ~ ^$1 {
+  include conf.d/cors.conf;
+
   rewrite $1(.*) $3\$1 break;
   proxy_set_header Host \$http_host;
   proxy_set_header X-Real-IP \$remote_addr;
@@ -60,6 +62,8 @@ EOF
 function create_assets_location() {
 cat <<EOF
 location ~ ^${1}/?assets/ {
+  include conf.d/cors.conf;
+
   root /${2}/public;
   gzip_static on;
   expires max;
