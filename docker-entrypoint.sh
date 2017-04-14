@@ -11,7 +11,6 @@ UPSTREAMS_FILE=$NGINX_INSTALL_PATH/conf.d/upstreams.conf
 
 # Update placeholder vars to be taken from ENV vars
 
-PLACEHOLDER_CORS_ORIGIN_REGEX="${SERVER_CORS_ORIGIN_REGEX:-.*}"
 PLACEHOLDER_SERVER_NAME="${SERVER_NAME:-_}"
 PLACEHOLDER_SERVER_TYPE="${SERVER_TYPE:-http}"
 
@@ -46,8 +45,6 @@ EOF
 function create_location() {
 cat <<EOF
 location ~ ^$1 {
-  include conf.d/cors.conf;
-
   rewrite $1(.*) $3\$1 break;
   proxy_set_header Host \$http_host;
   proxy_set_header X-Real-IP \$remote_addr;
@@ -62,8 +59,6 @@ EOF
 function create_assets_location() {
 cat <<EOF
 location ~ ^${1}/?assets/ {
-  include conf.d/cors.conf;
-
   root /${2}/public;
   gzip_static on;
   expires max;
@@ -121,7 +116,6 @@ sed -i "s/PLACEHOLDER_SERVER_TYPE/${PLACEHOLDER_SERVER_TYPE}/g" "${NGINX_INSTALL
 
 for conf in $NGINX_INSTALL_PATH/conf.d/*.conf; do
   sed -i "s/PLACEHOLDER_SERVER_NAME/${PLACEHOLDER_SERVER_NAME}/g" "${conf}"
-  sed -i "s|PLACEHOLDER_CORS_ORIGIN_REGEX|${PLACEHOLDER_CORS_ORIGIN_REGEX}|g" "${conf}"
 done 
 
 # Execute the CMD from the Dockerfile and pass in all of its arguments.
