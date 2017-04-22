@@ -76,14 +76,15 @@ if [[ "$SERVER_SERVERNAMES" ]]; then
 
       echo "Configuring NGINX PHP-FPM servername: '$host' => '$cont:$port:$root'"
 
-      if servername_exists $hist; then
+      if servername_exists $host; then
         echo "ERROR! ServerName conflict: '$host' is already registered!"
         exit 1
       else
-        for conf in $NGINX_INSTALL_PATH/conf.d/*.conf; do
-          file=$(basename $conf)
+        declare -a files=("locations.conf" "common.conf" "default.conf" "elb.conf" "http.conf" "https.conf")
 
-          cp $conf $NGINX_INSTALL_PATH/conf.d/$host-$file
+        ## now loop through the above array
+        for file in "${files[@]}"; do
+          cp $NGINX_INSTALL_PATH/conf.d/$file $NGINX_INSTALL_PATH/conf.d/$host-$file
         done
 
         for conf in $NGINX_INSTALL_PATH/conf.d/$host-*; do
