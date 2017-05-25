@@ -13,6 +13,7 @@ UPSTREAMS_FILE=$NGINX_INSTALL_PATH/conf.d/upstreams.conf
 
 PLACEHOLDER_SERVER_NAME="${SERVER_NAME:-_}"
 PLACEHOLDER_SERVER_TYPE="${SERVER_TYPE:-http}"
+PLACEHOLDER_CLIENT_MAX_BODY_SIZE="${CLIENT_MAX_BODY_SIZE:-1m}"
 
 upstream_exists () {
   for i in "${UPSTREAMS[@]}"; do
@@ -116,6 +117,7 @@ sed -i "s/PLACEHOLDER_SERVER_TYPE/${PLACEHOLDER_SERVER_TYPE}/g" "${NGINX_INSTALL
 
 for conf in $NGINX_INSTALL_PATH/conf.d/*.conf; do
   sed -i "s/PLACEHOLDER_SERVER_NAME/${PLACEHOLDER_SERVER_NAME}/g" "${conf}"
+  sed -i "s/PLACEHOLDER_CLIENT_MAX_BODY_SIZE/${PLACEHOLDER_CLIENT_MAX_BODY_SIZE}/g" "${conf}"
 done 
 
 # Execute the CMD from the Dockerfile and pass in all of its arguments.
